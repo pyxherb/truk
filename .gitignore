@@ -1,0 +1,38 @@
+# Build artifacts
+out/
+build/
+CMakeFiles/
+CMakeScripts/
+_deps
+generated/
+
+*.slx
+.antlr/
+
+*.zip
+*.tar
+*.gz
+*.xz
+*.7z
+
+*.out.cc
+*.out.h
+
+# Development artifacts
+.vs/
+.vscode/
+.idea/
+.cache/
+.VSCodeCounter/
+.DS_Store/
+CMakePresets.json
+CMakeSettings.json
+*.user
+*.bak
+.nvim.lua
+.clangd
+.DS_Store
+
+# Runtime artifacts
+*.log
+*.lock
