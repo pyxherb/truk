@@ -1,0 +1,9 @@
+import types;
+
+extern fn is_file(file_path: path) -> bool;
+extern fn is_dir(file_path: path) -> bool;
+
+extern fn create_file(file_path: path) -> int;
+extern fn create_dir(file_path: path) -> int;
+
+extern fn exec(program_path: path, args: string[], cwd: path) -> int;

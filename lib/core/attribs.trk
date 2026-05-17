@@ -1,0 +1,7 @@
+import types;
+
+public extern attribute AppliesToClass();
+public extern attribute AppliesToEnum();
+public extern attribute AppliesToUsing();
+public extern attribute AppliesToFn();
+public extern attribute AppliesToVar(type: typename);

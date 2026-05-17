@@ -25,8 +25,6 @@ if(CMAKE_BUILD_TYPE)
     endif()
 endif()
 
-# if(NOT DEFINED ${PBOS_TOOLS_BINARY_DIR})
-    # set(PBOS_TOOLS_BINARY_DIR ${PROJECT_BINARY_DIR})
-# endif()
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/")
 
 add_subdirectory("truk")

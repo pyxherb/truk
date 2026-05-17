@@ -1,0 +1,46 @@
+import events;
+import attribs;
+
+public using SourceCompilationHandler = fn (src_path: path, toolchain_config: class) -> int;
+
+public class SourceUnitHandler {
+	config_hooks: EventHookSet?,
+	on_compile: SourceCompilationHandler
+}
+
+[[AppliesToVar(SourceUnitHandler)]]
+public extern attribute RegisterSourceUnitHandler(id: string);
+
+public extern fn get_source_unit_handler(id: string) -> SourceUnitHandler?;
+
+public class Target {
+	/// Name of the target.
+	name: string,
+
+	/// Required target dependencies.
+	deps: entity[]?,
+
+	/// Optional target dependencies.
+	opt_deps: entity[]?,
+
+	/// Toolchain configurations classified by source languages.
+	mutable toolchain_config: [ string: class ],
+
+	/// Source file groups classified by source languages.
+	mutable src: [ string: path ],
+
+	/// Subdirectories of the package.
+	mutable subdirs: path[]?,
+
+	/// Target's base output directory.
+	mutable output_dir: path?,
+
+	/// Build event handlers functions.
+	build_handlers: EventHandlerSet[]?,
+
+	/// Clean event handlers functions.
+	clean_handlers: EventHandlerSet[]?
+
+	/// Configure action hook functions.
+	configure_hooks: EventHookSet[]?;
+}

@@ -1,0 +1,9 @@
+import std.os as os;
+import toolchains.cxx;
+
+[[SourceUnitHandler("cxx")]]
+let cxx_comp = {
+	on_compile: fn (src_path: path) {
+
+	}
+}

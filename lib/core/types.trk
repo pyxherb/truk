@@ -1,0 +1,38 @@
+/// The 32-bit integer type.
+public extern using int;
+
+/// The unsigned 32-bit integer type.
+public extern using uint;
+
+/// The platform-sized integer type.
+public extern using sizeint;
+
+/// The platform-sized unsinged integer type.
+public extern using usizeint;
+
+/// The 64-bit integer type.
+public extern using long;
+
+/// The unsigned 64-bit integer type.
+public extern using ulong;
+
+/// The 32-bit IEEE 754 floating-point numbe typer.
+public extern using float;
+
+/// The 64-bit IEEE 754 floating-point number type.
+public extern using double;
+
+/// The boolean type.
+public extern using bool;
+
+/// The unicode string type.
+public extern using string;
+
+/// The file system path type.
+public extern using path = string;
+
+/// The package/dependency management entity type.
+public extern using entity = string;
+
+/// The regular expression type.
+public extern using re;

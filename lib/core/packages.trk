@@ -1,0 +1,30 @@
+import event;
+
+public class Package {
+	/// Name of the package.
+	name: string,
+
+	/// Required package dependencies.
+	deps: entity[]?,
+
+	/// Optional package dependencies.
+	opt_deps: entity[]?,
+
+	/// Subdirectories of the package.
+	subdirs: path[]?,
+
+	/// Tags of the package.
+	tags: string[]?,
+
+	/// Package's base output directory.
+	output_dir: path,
+
+	/// Build event handlers functions.
+	build_handlers: EventHandlerSet?,
+
+	/// Clean event handlers functions.
+	clean_handlers: EventHandlerSet?
+
+	/// Configure action hook functions.
+	configure_hooks: EventHookSet?;
+}

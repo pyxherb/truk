@@ -38,6 +38,46 @@ TRUK_API InternalExceptionPointer truk::lex(Module *module_node, const std::stri
 				<InitialCondition>"//"		{ YYSETCONDITION(LineCommentCondition); token->token_id = TokenId::LineComment; continue; }
 				<InitialCondition>"/*"		{ YYSETCONDITION(CommentCondition); token->token_id = TokenId::BlockComment; continue; }
 
+				<InitialCondition>"->"		{ token->token_id = TokenId::ReturnTypeOp; break; }
+				<InitialCondition>"::"		{ token->token_id = TokenId::ScopeOp; break; }
+				<InitialCondition>"=>"		{ token->token_id = TokenId::MatchOp; break; }
+				<InitialCondition>"&&"		{ token->token_id = TokenId::LAndOp; break; }
+				<InitialCondition>"||"		{ token->token_id = TokenId::LOrOp; break; }
+				<InitialCondition>"+"		{ token->token_id = TokenId::AddOp; break; }
+				<InitialCondition>"-"		{ token->token_id = TokenId::SubOp; break; }
+				<InitialCondition>"*"		{ token->token_id = TokenId::MulOp; break; }
+				<InitialCondition>"/"		{ token->token_id = TokenId::DivOp; break; }
+				<InitialCondition>"%"		{ token->token_id = TokenId::ModOp; break; }
+				<InitialCondition>"&"		{ token->token_id = TokenId::AndOp; break; }
+				<InitialCondition>"|"		{ token->token_id = TokenId::OrOp; break; }
+				<InitialCondition>"^"		{ token->token_id = TokenId::XorOp; break; }
+				<InitialCondition>"!"		{ token->token_id = TokenId::LNotOp; break; }
+				<InitialCondition>"~"		{ token->token_id = TokenId::NotOp; break; }
+				<InitialCondition>"="		{ token->token_id = TokenId::AssignOp; break; }
+				<InitialCondition>"+="		{ token->token_id = TokenId::AddAssignOp; break; }
+				<InitialCondition>"-="		{ token->token_id = TokenId::SubAssignOp; break; }
+				<InitialCondition>"*="		{ token->token_id = TokenId::MulAssignOp; break; }
+				<InitialCondition>"/="		{ token->token_id = TokenId::DivAssignOp; break; }
+				<InitialCondition>"%="		{ token->token_id = TokenId::ModAssignOp; break; }
+				<InitialCondition>"&="		{ token->token_id = TokenId::AndAssignOp; break; }
+				<InitialCondition>"|="		{ token->token_id = TokenId::OrAssignOp; break; }
+				<InitialCondition>"^="		{ token->token_id = TokenId::XorAssignOp; break; }
+				<InitialCondition>"<<="		{ token->token_id = TokenId::ShlAssignOp; break; }
+				<InitialCondition>">>="		{ token->token_id = TokenId::ShrAssignOp; break; }
+				<InitialCondition>"==="		{ token->token_id = TokenId::StrictEqOp; break; }
+				<InitialCondition>"!=="		{ token->token_id = TokenId::StrictNeqOp; break; }
+				<InitialCondition>"=="		{ token->token_id = TokenId::EqOp; break; }
+				<InitialCondition>"!="		{ token->token_id = TokenId::NeqOp; break; }
+				<InitialCondition>"<<"		{ token->token_id = TokenId::ShlOp; break; }
+				<InitialCondition>">>"		{ token->token_id = TokenId::ShrOp; break; }
+				<InitialCondition>"<=>"		{ token->token_id = TokenId::CmpOp; break; }
+				<InitialCondition>"<="		{ token->token_id = TokenId::LtEqOp; break; }
+				<InitialCondition>">="		{ token->token_id = TokenId::GtEqOp; break; }
+				<InitialCondition>"<"		{ token->token_id = TokenId::LtOp; break; }
+				<InitialCondition>">"		{ token->token_id = TokenId::GtOp; break; }
+				<InitialCondition>"$"		{ token->token_id = TokenId::DollarOp; break; }
+				<InitialCondition>"@"		{ token->token_id = TokenId::At; break; }
+
 				<InitialCondition>"'"		{ token->token_id = TokenId::Quote; break; }
 
 				<InitialCondition>"("		{ token->token_id = TokenId::LParenthese; break; }
