@@ -72,11 +72,11 @@ namespace truk {
 	};
 }
 
-#define TRUK_RETURN_IF_EXCEPT(expr)                         \
-	if (truk::InternalExceptionPointer e = (expr); (bool)e) \
+#define TRUK_RETURN_IF_EXCEPT(...)                                 \
+	if (truk::InternalExceptionPointer e = (__VA_ARGS__); (bool)e) \
 	return e
-#define TRUK_RETURN_IF_EXCEPT_WITH_LVAR(name, expr) \
-	if ((bool)(name = (expr)))                      \
-		return name;
+#define TRUK_RETURN_IF_EXCEPT_WITH_LVAR(name, ...) \
+	if ((bool)(name = (__VA_ARGS__)))              \
+	return name
 
 #endif

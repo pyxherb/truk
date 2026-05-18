@@ -9,5 +9,14 @@
 	),
 	:output-dir (
 		$BUILD_ROOT
+	),
+	:sources (
+		:re2c (
+			(glob "./lexer.in.cpp")
+		)
+		:cpp (
+			(glob "*.h")
+			(glob "*.cc")
+		)
 	)
 )

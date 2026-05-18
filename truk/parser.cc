@@ -406,7 +406,7 @@ ParseCoroutine Parser::parse_list_element(HostRefHolder &host_ref_holder, Value 
 			if (!host_ref_holder.add_object(obj.get()))
 				co_return OutOfMemoryError::alloc();
 
-			if(!(obj->data.build(data)))
+			if (!(obj->data.build(data)))
 				co_return OutOfMemoryError::alloc();
 
 			value_out = obj.get();
@@ -430,6 +430,28 @@ ParseCoroutine Parser::parse_list_element(HostRefHolder &host_ref_holder, Value 
 
 			if (!(obj = alloc_runtime_managed_object<SymbolObject>(runtime->get_global_allocator(), runtime->get_global_allocator())))
 				co_return OutOfMemoryError::alloc();
+
+			peff::String first_entry(runtime->get_global_allocator());
+
+			if (!first_entry.build(prefix_token->source_text))
+				co_return OutOfMemoryError::alloc();
+
+			if (!obj->name_entries.push_back(std::move(first_entry)))
+				co_return OutOfMemoryError::alloc();
+
+			Token *cur_token;
+			while (true) {
+				if ((cur_token = peek_token())->token_id != TokenId::ScopeOp)
+					break;
+
+				peff::String entry(runtime->get_global_allocator());
+
+				if (!first_entry.build(cur_token->source_text))
+					co_return OutOfMemoryError::alloc();
+
+				if (!obj->name_entries.push_back(std::move(entry)))
+					co_return OutOfMemoryError::alloc();
+			}
 
 			if (!host_ref_holder.add_object(obj.get()))
 				co_return OutOfMemoryError::alloc();

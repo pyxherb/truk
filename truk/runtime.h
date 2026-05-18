@@ -5,6 +5,7 @@
 #include "except.h"
 #include <peff/containers/hashmap.h>
 #include <peff/containers/set.h>
+#include <coroutine>
 
 namespace truk {
 	class Runtime;
@@ -49,7 +50,8 @@ namespace truk {
 
 		Bool,
 
-		Object
+		Object,
+		QuotedObject
 	};
 
 	using ssize_t = std::make_signed_t<size_t>;
@@ -73,6 +75,8 @@ namespace truk {
 		constexpr Value() = default;
 		constexpr Value(const Value &) = default;
 		constexpr Value(Value &&) = default;
+		constexpr Value &operator=(const Value &) = default;
+		constexpr Value &operator=(Value &&) = default;
 		constexpr ~Value() = default;
 		PEFF_FORCEINLINE constexpr explicit Value(int32_t data) noexcept : value_type(ValueType::Int), as_int(data) {
 		}
@@ -155,7 +159,10 @@ namespace truk {
 		Symbol,
 		List,
 		Array,
-		Module
+		Scope,
+		Module,
+		Fn,
+		Context,
 	};
 
 	enum class ObjectGCStatus : uint8_t {
@@ -197,7 +204,7 @@ namespace truk {
 
 	class SymbolObject : public Object {
 	public:
-		peff::String name;
+		peff::DynArray<peff::String> name_entries;
 
 		TRUK_API SymbolObject(peff::Alloc *allocator);
 		TRUK_API ~SymbolObject();
@@ -207,6 +214,7 @@ namespace truk {
 
 	class ListObject : public Object {
 	public:
+		// TODO: Use Deque instead of DynArray if implemented.
 		peff::DynArray<Value> elements;
 
 		TRUK_API ListObject(peff::Alloc *allocator);
@@ -227,9 +235,25 @@ namespace truk {
 		TRUK_API virtual void dealloc() noexcept override;
 	};
 
+	class MemberObject;
+
+	struct ScopeObject : public Object {
+		MemberObject *owner;
+		peff::HashMap<std::string_view, MemberObject *> members;
+		peff::Set<MemberObject *> imports;
+		ScopeObject *lexical_outer;
+
+		TRUK_API ScopeObject(peff::Alloc *allocator);
+		TRUK_API ~ScopeObject();
+
+		TRUK_API void dealloc() noexcept;
+	};
+
 	class MemberObject : public Object {
 	public:
+		Object *parent = nullptr;
 		peff::String name;
+		ScopeObject *scope;
 
 		TRUK_API MemberObject(peff::Alloc *allocator, ObjectType object_type);
 		TRUK_API ~MemberObject();
@@ -237,12 +261,113 @@ namespace truk {
 
 	class ModuleObject final : public MemberObject {
 	public:
-		MemberObject *parent;
 		TokenList token_list;
-		peff::HashMap<std::string_view, MemberObject *> members;
 
 		TRUK_API ModuleObject(peff::Alloc *allocator);
 		TRUK_API ~ModuleObject();
+
+		TRUK_API virtual void dealloc() noexcept override;
+	};
+
+	enum class FnType : uint8_t {
+		Regular = 0,
+		Native,
+		SpecialOperator
+	};
+
+	class FnObject : public MemberObject {
+	private:
+		const FnType _fn_type;
+
+	public:
+		TRUK_API FnObject(peff::Alloc *allocator, FnType fn_type);
+		TRUK_API ~FnObject();
+
+		PEFF_FORCEINLINE FnType get_fn_type() const noexcept {
+			return _fn_type;
+		}
+	};
+
+	class RegularFnObject : public FnObject {
+	public:
+		peff::RcObjectPtr<peff::Alloc> allocator;
+		ListObject *body = nullptr;
+
+		TRUK_API RegularFnObject(peff::Alloc *allocator);
+		TRUK_API ~RegularFnObject();
+
+		TRUK_API virtual void dealloc() noexcept override;
+	};
+
+	struct EvalFrame;
+
+	typedef InternalExceptionPointer (*NativeFnCallback)(EvalFrame *eval_frame);
+
+	class NativeFnObject : public FnObject {
+	public:
+		peff::RcObjectPtr<peff::Alloc> allocator;
+		NativeFnCallback callback;
+
+		TRUK_API NativeFnObject(peff::Alloc *allocator);
+		TRUK_API ~NativeFnObject();
+
+		TRUK_API virtual void dealloc() noexcept override;
+	};
+
+	/// @brief The special operator callback type, will be invoked for each operands.
+	typedef InternalExceptionPointer (*SpecialOperatorFrameInitCallback)(EvalFrame *eval_frame);
+	typedef InternalExceptionPointer (*SpecialOperatorOperandEvalCallback)(EvalFrame *eval_frame, size_t eval_index, const Value &unevaluated_operand, bool &should_evaluate_out);
+	typedef InternalExceptionPointer (*SpecialOperatorInvokeCallback)(EvalFrame *eval_frame);
+
+	class SpecialOperatorObject : public FnObject {
+	public:
+		peff::RcObjectPtr<peff::Alloc> allocator;
+
+		SpecialOperatorFrameInitCallback frame_init_callback = nullptr;
+		SpecialOperatorOperandEvalCallback operand_eval_callback = nullptr;
+		SpecialOperatorInvokeCallback invoke_callback = nullptr;
+
+		TRUK_API SpecialOperatorObject(peff::Alloc *allocator);
+		TRUK_API ~SpecialOperatorObject();
+
+		TRUK_API virtual void dealloc() noexcept override;
+	};
+
+	enum class EvalFrameType {
+		RegularExpr = 0,
+	};
+
+	class EvalFrameExData {
+	public:
+		virtual void dealloc() = 0;
+	};
+
+	struct EvalFrame {
+		ScopeObject *cur_scope = nullptr;
+		FnObject *cached_callee = nullptr;
+		ListObject *list_object = nullptr;
+		peff::DynArray<Value> evaluated_operands;
+		size_t eval_index = 0;
+		Value returned_value;
+		std::unique_ptr<EvalFrameExData, peff::DeallocableDeleter<EvalFrameExData>> ex_data;
+
+		TRUK_API EvalFrame(peff::Alloc *allocator);
+
+		PEFF_FORCEINLINE void set_exdata(EvalFrameExData *exdata) noexcept {
+			assert(!ex_data);
+			this->ex_data = decltype(EvalFrame::ex_data)(exdata);
+		}
+		PEFF_FORCEINLINE EvalFrameExData *get_exdata() const noexcept {
+			return ex_data.get();
+		}
+	};
+
+	class ContextObject : public Object {
+	public:
+		peff::List<EvalFrame> frames;
+
+		TRUK_API ContextObject(peff::Alloc *allocator);
+		TRUK_API ~ContextObject();
 
 		TRUK_API virtual void dealloc() noexcept override;
 	};
@@ -394,6 +519,11 @@ namespace truk {
 	public:
 		TRUK_API Runtime(peff::Alloc *upstream) noexcept;
 		TRUK_API void gc(Object *&end_object_out, size_t &num_objects) noexcept;
+
+		TRUK_API MemberObject *resolve_member(ScopeObject *scope, SymbolObject *symbol);
+
+		TRUK_API InternalExceptionPointer exec(ContextObject *list);
+		TRUK_API InternalExceptionPointer exec(ScopeObject *cur_scope, ListObject *list);
 
 		PEFF_FORCEINLINE peff::Alloc *get_global_allocator() noexcept {
 			return &_global_alloc;
