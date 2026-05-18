@@ -1,14 +1,13 @@
-import os;
-
-let found_sources: string[];
-
-package truk {
-	deps: [
-		"re2c": "*"
-	],
-	tags: [
-		"building",
+(import os)
+(target truk
+	:deps (
+		:re2c "*"
+	),
+	:tags (
+		"building"
 		"build-system"
-	],
-	output_dir: BUILD_ROOT
-}
+	),
+	:output-dir (
+		$BUILD_ROOT
+	)
+)

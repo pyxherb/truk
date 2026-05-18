@@ -45,6 +45,7 @@ TRUK_API LexicalError *LexicalError::alloc(
 
 TRUK_API SyntaxError::SyntaxError(
 	peff::Alloc *allocator,
+	SourceLocation source_location,
 	SyntaxErrorKind syntax_error_kind) noexcept : CompilationError(allocator, CompilationErrorCode::SyntaxError), syntax_error_kind(syntax_error_kind) {
 }
 
@@ -57,6 +58,7 @@ TRUK_API void SyntaxError::dealloc() noexcept {
 
 TRUK_API SyntaxError *SyntaxError::alloc(
 	peff::Alloc *allocator,
+	SourceLocation source_location,
 	SyntaxErrorKind syntax_error_kind) noexcept {
-	return peff::alloc_and_construct<SyntaxError>(allocator, alignof(SyntaxError), allocator, syntax_error_kind);
+	return peff::alloc_and_construct<SyntaxError>(allocator, alignof(SyntaxError), allocator, source_location, syntax_error_kind);
 }

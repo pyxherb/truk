@@ -46,14 +46,18 @@ namespace truk {
 		}
 	};
 
-	template<typename T>
+	template <typename T>
 	using AstNodePtr = peff::SharedPtr<T>;
 
-	class Module;
+	class ModuleObject;
 
 	struct SourceLocation {
-		Module *module_node;
-		SourcePosition begin_position, end_position;
+		ModuleObject *module_node;
+		size_t begin_index, end_index;
+
+		PEFF_FORCEINLINE SourceLocation(): module_node(nullptr), begin_index(SIZE_MAX), end_index(SIZE_MAX) {}
+		PEFF_FORCEINLINE SourceLocation(ModuleObject *module_node, size_t index) : module_node(module_node), begin_index(index), end_index(index) {}
+		PEFF_FORCEINLINE SourceLocation(ModuleObject *module_node, size_t begin_index, size_t end_index) : module_node(module_node), begin_index(begin_index), end_index(end_index) {}
 	};
 
 	class Lexer;
@@ -67,45 +71,38 @@ namespace truk {
 		RParenthese,
 
 		ScopeOp,
-		ReturnTypeOp,
-		MatchOp,
-		LAndOp,
-		LOrOp,
-		AddOp,
-		SubOp,
-		MulOp,
-		DivOp,
-		ModOp,
-		AndOp,
-		OrOp,
-		XorOp,
-		LNotOp,
-		NotOp,
-		AssignOp,
-		AddAssignOp,
-		SubAssignOp,
-		MulAssignOp,
-		DivAssignOp,
-		ModAssignOp,
-		AndAssignOp,
-		OrAssignOp,
-		XorAssignOp,
-		ShlAssignOp,
-		ShrAssignOp,
-		EqOp,
-		NeqOp,
-		ShlOp,
-		ShrOp,
-		LtEqOp,
-		GtEqOp,
-		LtOp,
-		GtOp,
-		CmpOp,
-		DollarOp,
 
-		PackageKeyword,
-		TargetKeyword,
-		UsingKeyword,
+		Quote,
+		Colon,
+		Dollar,
+		Question,
+		Hash,
+		Percent,
+		Xor,
+		Dot,
+		And,
+		At,
+		Exclamation,
+		Tilde,
+		Asterisk,
+		Assign,
+		Eq,
+		Neq,
+		Ellipsis,
+		Backquote,
+
+		LBrace,
+		RBrace,
+		LBracket,
+		RBracket,
+
+		IntLiteral,
+		LongLiteral,
+		UIntLiteral,
+		ULongLiteral,
+		FloatLiteral,
+		DoubleLiteral,
+		StringLiteral,
 
 		Id,
 
@@ -118,15 +115,28 @@ namespace truk {
 		MaxToken
 	};
 
+	enum class IntTokenType : uint8_t {
+		Decimal,
+		Hexadecimal,
+		Octal,
+		Binary
+	};
+
+	struct StringTokenExData {
+		peff::String str;
+	};
+
 	struct Token {
+		size_t token_index;
 		TokenId token_id;
 		std::string_view source_text;
-		SourceLocation source_location;
+		SourcePosition begin_pos, end_pos;
+		std::variant<std::monostate, StringTokenExData, IntTokenType> exdata;
 	};
 
 	using TokenList = peff::DynArray<Token>;
 
-	[[nodiscard]] TRUK_API InternalExceptionPointer lex(Module *module_node, const std::string_view &src, peff::Alloc *allocator, TokenList &token_list_out);
+	[[nodiscard]] TRUK_API InternalExceptionPointer lex(ModuleObject *module_node, const std::string_view &src, peff::Alloc *allocator, TokenList &token_list_out);
 
 	TRUK_API const char *get_token_name(TokenId token_id);
 }

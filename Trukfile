@@ -1,7 +1,6 @@
-import os;
-
-package truk {
-	subdirs = [
+(import os)
+(package truk
+	:subdirs (
 		"./truk"
-	]
-}
+	)
+)

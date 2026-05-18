@@ -1,11 +1,10 @@
 #include "except_base.h"
 
-using namespace mklisp;
+using namespace truk;
 
-MKLISP_API InternalException::InternalException(
-	std::pmr::memory_resource *memoryResource,
-	InternalExceptionKind exceptionKind) : memoryResource(memoryResource), exceptionKind(exceptionKind) {
+TRUK_API InternalException::InternalException(
+	InternalExceptionKind except_kind) : except_kind(except_kind) {
 }
 
-MKLISP_API InternalException::~InternalException() {
+TRUK_API InternalException::~InternalException() {
 }

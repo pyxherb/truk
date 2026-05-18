@@ -14,7 +14,7 @@ enum LexCondition {
 	yycLineCommentCondition,
 };
 
-TRUK_API InternalExceptionPointer truk::lex(Module *module_node, const std::string_view &src, peff::Alloc *allocator, TokenList &token_list_out) {
+TRUK_API InternalExceptionPointer truk::lex(ModuleObject *module_node, const std::string_view &src, peff::Alloc *allocator, TokenList &token_list_out) {
 	const char *YYCURSOR = src.data(), *YYMARKER = YYCURSOR, *YYLIMIT = src.data() + src.size();
 	const char *prev_YYCURSOR = YYCURSOR;
 
@@ -26,6 +26,8 @@ TRUK_API InternalExceptionPointer truk::lex(Module *module_node, const std::stri
 	Token token;
 
 	while (true) {
+		token.token_index = token_list_out.size();
+
 		peff::String str_literal(allocator);
 
 		while (true) {
@@ -38,52 +40,134 @@ TRUK_API InternalExceptionPointer truk::lex(Module *module_node, const std::stri
 				<InitialCondition>"//"		{ YYSETCONDITION(LineCommentCondition); token->token_id = TokenId::LineComment; continue; }
 				<InitialCondition>"/*"		{ YYSETCONDITION(CommentCondition); token->token_id = TokenId::BlockComment; continue; }
 
-				<InitialCondition>"->"		{ token->token_id = TokenId::ReturnTypeOp; break; }
 				<InitialCondition>"::"		{ token->token_id = TokenId::ScopeOp; break; }
-				<InitialCondition>"=>"		{ token->token_id = TokenId::MatchOp; break; }
-				<InitialCondition>"&&"		{ token->token_id = TokenId::LAndOp; break; }
-				<InitialCondition>"||"		{ token->token_id = TokenId::LOrOp; break; }
-				<InitialCondition>"+"		{ token->token_id = TokenId::AddOp; break; }
-				<InitialCondition>"-"		{ token->token_id = TokenId::SubOp; break; }
-				<InitialCondition>"*"		{ token->token_id = TokenId::MulOp; break; }
-				<InitialCondition>"/"		{ token->token_id = TokenId::DivOp; break; }
-				<InitialCondition>"%"		{ token->token_id = TokenId::ModOp; break; }
-				<InitialCondition>"&"		{ token->token_id = TokenId::AndOp; break; }
-				<InitialCondition>"|"		{ token->token_id = TokenId::OrOp; break; }
-				<InitialCondition>"^"		{ token->token_id = TokenId::XorOp; break; }
-				<InitialCondition>"!"		{ token->token_id = TokenId::LNotOp; break; }
-				<InitialCondition>"~"		{ token->token_id = TokenId::NotOp; break; }
-				<InitialCondition>"="		{ token->token_id = TokenId::AssignOp; break; }
-				<InitialCondition>"+="		{ token->token_id = TokenId::AddAssignOp; break; }
-				<InitialCondition>"-="		{ token->token_id = TokenId::SubAssignOp; break; }
-				<InitialCondition>"*="		{ token->token_id = TokenId::MulAssignOp; break; }
-				<InitialCondition>"/="		{ token->token_id = TokenId::DivAssignOp; break; }
-				<InitialCondition>"%="		{ token->token_id = TokenId::ModAssignOp; break; }
-				<InitialCondition>"&="		{ token->token_id = TokenId::AndAssignOp; break; }
-				<InitialCondition>"|="		{ token->token_id = TokenId::OrAssignOp; break; }
-				<InitialCondition>"^="		{ token->token_id = TokenId::XorAssignOp; break; }
-				<InitialCondition>"<<="		{ token->token_id = TokenId::ShlAssignOp; break; }
-				<InitialCondition>">>="		{ token->token_id = TokenId::ShrAssignOp; break; }
-				<InitialCondition>"==="		{ token->token_id = TokenId::StrictEqOp; break; }
-				<InitialCondition>"!=="		{ token->token_id = TokenId::StrictNeqOp; break; }
-				<InitialCondition>"=="		{ token->token_id = TokenId::EqOp; break; }
-				<InitialCondition>"!="		{ token->token_id = TokenId::NeqOp; break; }
-				<InitialCondition>"<<"		{ token->token_id = TokenId::ShlOp; break; }
-				<InitialCondition>">>"		{ token->token_id = TokenId::ShrOp; break; }
-				<InitialCondition>"<=>"		{ token->token_id = TokenId::CmpOp; break; }
-				<InitialCondition>"<="		{ token->token_id = TokenId::LtEqOp; break; }
-				<InitialCondition>">="		{ token->token_id = TokenId::GtEqOp; break; }
-				<InitialCondition>"<"		{ token->token_id = TokenId::LtOp; break; }
-				<InitialCondition>">"		{ token->token_id = TokenId::GtOp; break; }
-				<InitialCondition>"$"		{ token->token_id = TokenId::DollarOp; break; }
+				<InitialCondition>"=="		{ token->token_id = TokenId::Eq; break; }
+				<InitialCondition>"!="		{ token->token_id = TokenId::Neq; break; }
+				<InitialCondition>"..."		{ token->token_id = TokenId::Ellipsis; break; }
+				<InitialCondition>":"		{ token->token_id = TokenId::Colon; break; }
+				<InitialCondition>"$"		{ token->token_id = TokenId::Dollar; break; }
+				<InitialCondition>"?"		{ token->token_id = TokenId::Question; break; }
+				<InitialCondition>"#"		{ token->token_id = TokenId::Hash; break; }
+				<InitialCondition>"%"		{ token->token_id = TokenId::Percent; break; }
+				<InitialCondition>"^"		{ token->token_id = TokenId::Xor; break; }
+				<InitialCondition>"."		{ token->token_id = TokenId::Dot; break; }
+				<InitialCondition>"&"		{ token->token_id = TokenId::And; break; }
 				<InitialCondition>"@"		{ token->token_id = TokenId::At; break; }
+				<InitialCondition>"!"		{ token->token_id = TokenId::Exclamation; break; }
+				<InitialCondition>"~"		{ token->token_id = TokenId::Tilde; break; }
+				<InitialCondition>"*"		{ token->token_id = TokenId::Asterisk; break; }
+				<InitialCondition>"="		{ token->token_id = TokenId::Assign; break; }
+				<InitialCondition>"`"		{ token->token_id = TokenId::Backquote; break; }
 
 				<InitialCondition>"'"		{ token->token_id = TokenId::Quote; break; }
 
+				<InitialCondition>"{"		{ token->token_id = TokenId::LBrace; break; }
+				<InitialCondition>"}"		{ token->token_id = TokenId::RBrace; break; }
+				<InitialCondition>"["		{ token->token_id = TokenId::LBracket; break; }
+				<InitialCondition>"]"		{ token->token_id = TokenId::RBracket; break; }
 				<InitialCondition>"("		{ token->token_id = TokenId::LParenthese; break; }
 				<InitialCondition>")"		{ token->token_id = TokenId::RParenthese; break; }
 
 				<InitialCondition>[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]* {
+					token->token_id = TokenId::Id;
+					break;
+				}
+
+				<InitialCondition>"0"[0-7]+[uU][lL] {
+					token->token_id = TokenId::ULongLiteral;
+					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
+						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Octal));
+					break;
+				}
+
+				<InitialCondition>[0-9]+[uU][lL] {
+					token->token_id = TokenId::ULongLiteral;
+					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
+						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Decimal));
+					break;
+				}
+
+				<InitialCondition>"0"[xX][0-9a-fA-F]+[uU][lL] {
+					token->token_id = TokenId::ULongLiteral;
+					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
+						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Hexadecimal));
+					break;
+				}
+
+				<InitialCondition>"0"[bB][01]+[uU][lL] {
+					token->token_id = TokenId::ULongLiteral;
+					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
+						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Binary));
+					break;
+				}
+
+				<InitialCondition>"0"[0-7]+[uU] {
+					token->token_id = TokenId::UIntLiteral;
+					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
+						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Octal));
+					break;
+				}
+
+				<InitialCondition>[0-9]+[uU] {
+					token->token_id = TokenId::UIntLiteral;
+					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
+						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Decimal));
+					break;
+				}
+
+				<InitialCondition>"0"[xX][0-9a-fA-F]+[uU] {
+					token->token_id = TokenId::UIntLiteral;
+					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
+						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Hexadecimal));
+					break;
+				}
+
+				<InitialCondition>"0"[bB][01]+[uU] {
+					token->token_id = TokenId::UIntLiteral;
+					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
+						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Binary));
+					break;
+				}
+
+				<InitialCondition>"0"[0-7]+ {
+					token->token_id = TokenId::IntLiteral;
+					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
+						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Octal));
+					break;
+				}
+
+				<InitialCondition>[0-9]+ {
+					token->token_id = TokenId::IntLiteral;
+					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
+						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Decimal));
+					break;
+				}
+
+				<InitialCondition>"0"[xX][0-9a-fA-F]+ {
+					token->token_id = TokenId::IntLiteral;
+					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
+						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Hexadecimal));
+					break;
+				}
+
+				<InitialCondition>"0"[bB][01]+ {
+					token->token_id = TokenId::IntLiteral;
+					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
+						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Binary));
+					break;
+				}
+
+				<InitialCondition>[0-9]+"."[0-9]+[fF] {
+					token->token_id = TokenId::F32Literal;
+					break;
+				}
+
+				<InitialCondition>[0-9]+"."[0-9]+ {
+					token->token_id = TokenId::F64Literal;
+					break;
+				}
+
+				<InitialCondition>[a-zA-Z_\-\x80-\xff][a-zA-Z0-9_\-\x80-\xff]* {
 					token->token_id = TokenId::Id;
 					break;
 				}
@@ -122,8 +206,7 @@ TRUK_API InternalExceptionPointer truk::lex(Module *module_node, const std::stri
 				<StringCondition>"\""		{
 					YYSETCONDITION(InitialCondition);
 					token->token_id = TokenId::StringLiteral;
-					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
-						peff::alloc_and_construct<StringTokenExtension>(allocator, alignof(std::max_align_t), allocator, std::move(str_literal)));
+					token->exdata = std::move(str_literal);
 					break;
 				}
 				<StringCondition>"\\"		{ YYSETCONDITION(EscapeCondition); continue; }
@@ -296,12 +379,11 @@ TRUK_API InternalExceptionPointer truk::lex(Module *module_node, const std::stri
 		size_t idxLastBeginNewline = src.find_last_of('\n', begin_index),
 			   idxLastEndNewline = src.find_last_of('\n', endIndex);
 
-		token.source_location.module_node = module_node;
-		token.source_location.begin_position = { (size_t)std::count(str_to_begin.begin(), str_to_begin.end(), '\n'),
+		token.begin_pos = { (size_t)std::count(str_to_begin.begin(), str_to_begin.end(), '\n'),
 			(idxLastBeginNewline == std::string_view::npos
 					? begin_index
 					: begin_index - idxLastBeginNewline - 1) };
-		token.source_location.end_position = { (size_t)std::count(str_to_end.begin(), str_to_end.end(), '\n'),
+		token.end_pos = { (size_t)std::count(str_to_end.begin(), str_to_end.end(), '\n'),
 			(idxLastEndNewline == std::string_view::npos
 					? endIndex
 					: endIndex - idxLastEndNewline) };
@@ -314,11 +396,12 @@ TRUK_API InternalExceptionPointer truk::lex(Module *module_node, const std::stri
 	}
 
 end: {
-	SourceLocation end_location = token.source_location;
+	auto pos = token.end_pos;
 
 	token = Token{};
 	token.token_id = TokenId::End;
-	token.source_location = end_location;
+	token.begin_pos = pos;
+	token.end_pos = pos;
 
 	if (!token_list_out.push_back(std::move(token)))
 		goto oom;

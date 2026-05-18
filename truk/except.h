@@ -22,6 +22,7 @@ namespace truk {
 	class CompilationError : public InternalException {
 	public:
 		peff::RcObjectPtr<peff::Alloc> self_allocator;
+		SourceLocation source_location;
 		CompilationErrorCode error_code;
 
 		TRUK_API CompilationError(
@@ -46,22 +47,25 @@ namespace truk {
 	};
 
 	enum class SyntaxErrorKind {
-
+		UnexpectedToken,
+		LiteralOverflowed,
 	};
 
 	class SyntaxError : public CompilationError {
 	public:
-		SourceLocation sourceLocation;
+		SourceLocation source_location;
 		SyntaxErrorKind syntax_error_kind;
 
 		TRUK_API SyntaxError(
 			peff::Alloc *allocator,
+			SourceLocation source_location,
 			SyntaxErrorKind syntax_error_kind) noexcept;
 		TRUK_API virtual ~SyntaxError();
 		TRUK_API virtual void dealloc() noexcept override;
 
 		TRUK_API static SyntaxError *alloc(
 			peff::Alloc *allocator,
+			SourceLocation source_location,
 			SyntaxErrorKind syntax_error_kind) noexcept;
 	};
 
