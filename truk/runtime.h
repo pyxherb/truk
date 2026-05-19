@@ -72,12 +72,12 @@ namespace truk {
 		};
 		ValueType value_type;
 
-		constexpr Value() = default;
+		Value() = default;
 		constexpr Value(const Value &) = default;
 		constexpr Value(Value &&) = default;
 		constexpr Value &operator=(const Value &) = default;
 		constexpr Value &operator=(Value &&) = default;
-		constexpr ~Value() = default;
+		~Value() = default;
 		PEFF_FORCEINLINE constexpr explicit Value(int32_t data) noexcept : value_type(ValueType::Int), as_int(data) {
 		}
 		PEFF_FORCEINLINE constexpr explicit Value(uint32_t data) noexcept : value_type(ValueType::UInt), as_uint(data) {
@@ -474,7 +474,7 @@ namespace truk {
 	};
 
 	template <typename T, typename... Args>
-	PEFF_FORCEINLINE HostObjectRef<T> alloc_runtime_managed_object(peff::Alloc *allocator, Args &&...args) {
+	PEFF_FORCEINLINE HostObjectRef<T> alloc_managed_object(peff::Alloc *allocator, Args &&...args) {
 		return peff::alloc_and_construct<T>(allocator, alignof(T), std::forward<Args>(args)...);
 	}
 
@@ -518,7 +518,8 @@ namespace truk {
 
 	public:
 		TRUK_API Runtime(peff::Alloc *upstream) noexcept;
-		TRUK_API void gc(Object *&end_object_out, size_t &num_objects) noexcept;
+		TRUK_API ~Runtime();
+		TRUK_API void gc() noexcept;
 
 		TRUK_API MemberObject *resolve_member(ScopeObject *scope, SymbolObject *symbol);
 

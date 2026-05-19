@@ -400,7 +400,7 @@ ParseCoroutine Parser::parse_list_element(HostRefHolder &host_ref_holder, Value 
 
 			HostObjectRef<StringObject> obj;
 
-			if (!(obj = alloc_runtime_managed_object<StringObject>(runtime->get_global_allocator(), runtime->get_global_allocator())))
+			if (!(obj = alloc_managed_object<StringObject>(runtime->get_global_allocator(), runtime->get_global_allocator())))
 				co_return OutOfMemoryError::alloc();
 
 			if (!host_ref_holder.add_object(obj.get()))
@@ -428,7 +428,7 @@ ParseCoroutine Parser::parse_list_element(HostRefHolder &host_ref_holder, Value 
 		case TokenId::Id: {
 			HostObjectRef<SymbolObject> obj;
 
-			if (!(obj = alloc_runtime_managed_object<SymbolObject>(runtime->get_global_allocator(), runtime->get_global_allocator())))
+			if (!(obj = alloc_managed_object<SymbolObject>(runtime->get_global_allocator(), runtime->get_global_allocator())))
 				co_return OutOfMemoryError::alloc();
 
 			peff::String first_entry(runtime->get_global_allocator());
@@ -487,7 +487,7 @@ ParseCoroutine Parser::parse_list_body(HostRefHolder &host_ref_holder, HostObjec
 	if (auto e = expect_token(next_token(), TokenId::LParenthese))
 		co_return e;
 
-	if (!(list_out = alloc_runtime_managed_object<ListObject>(runtime->get_global_allocator(), runtime->get_global_allocator())))
+	if (!(list_out = alloc_managed_object<ListObject>(runtime->get_global_allocator(), runtime->get_global_allocator())))
 		co_return OutOfMemoryError::alloc();
 
 	while (true) {
@@ -511,7 +511,7 @@ ParseCoroutine Parser::parse_list_body(HostRefHolder &host_ref_holder, HostObjec
 }
 
 ParseCoroutine Parser::parse_program(HostRefHolder &host_ref_holder, HostObjectRef<ListObject> &list_out) {
-	if (!(list_out = alloc_runtime_managed_object<ListObject>(runtime->get_global_allocator(), runtime->get_global_allocator())))
+	if (!(list_out = alloc_managed_object<ListObject>(runtime->get_global_allocator(), runtime->get_global_allocator())))
 		co_return OutOfMemoryError::alloc();
 
 	while (true) {
@@ -531,7 +531,7 @@ ParseCoroutine Parser::parse_program(HostRefHolder &host_ref_holder, HostObjectR
 	co_return {};
 }
 
-InternalExceptionPointer Parser::parse(Runtime *runtime, HostObjectRef<ListObject> &list_out) {
-	HostRefHolder holder(runtime->get_global_allocator());
+InternalExceptionPointer Parser::parse(peff::Alloc *misc_allocator, HostObjectRef<ListObject> &list_out) {
+	HostRefHolder holder(misc_allocator);
 	return parse_program(holder, list_out).resume(&this->coro_scheduler);
 }

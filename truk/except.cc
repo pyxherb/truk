@@ -17,6 +17,21 @@ TRUK_API OutOfMemoryError *OutOfMemoryError::alloc() noexcept {
 	return &_g_oom_singleton;
 }
 
+static IOError _g_io_error_singleton;
+
+TRUK_API IOError::IOError() noexcept : InternalException(InternalExceptionKind::IO) {
+}
+
+TRUK_API IOError::~IOError() {
+}
+
+TRUK_API void IOError::dealloc() noexcept {
+}
+
+TRUK_API IOError *IOError::alloc() noexcept {
+	return &_g_io_error_singleton;
+}
+
 TRUK_API CompilationError::CompilationError(
 	peff::Alloc *allocator,
 	CompilationErrorCode error_code) noexcept : InternalException(InternalExceptionKind::CompilationError), self_allocator(allocator), error_code(error_code) {

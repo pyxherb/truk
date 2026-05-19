@@ -189,7 +189,7 @@ namespace truk {
 			return {};
 		}
 
-		InternalExceptionPointer parse(Runtime *runtime, HostObjectRef<ListObject> &list_out);
+		InternalExceptionPointer parse(peff::Alloc *misc_allocator, HostObjectRef<ListObject> &list_out);
 	};
 }
 

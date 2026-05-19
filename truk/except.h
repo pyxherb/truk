@@ -14,6 +14,15 @@ namespace truk {
 		TRUK_API static OutOfMemoryError *alloc() noexcept;
 	};
 
+	class IOError final : public InternalException {
+	public:
+		TRUK_API IOError() noexcept;
+		TRUK_API virtual ~IOError();
+		TRUK_API virtual void dealloc() noexcept override;
+
+		TRUK_API static IOError *alloc() noexcept;
+	};
+
 	enum class CompilationErrorCode {
 		LexicalError = 0,
 		SyntaxError

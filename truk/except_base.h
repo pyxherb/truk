@@ -10,6 +10,7 @@
 namespace truk {
 	enum class InternalExceptionKind {
 		OutOfMemory = 0,
+		IO,
 		CompilationError
 	};
 

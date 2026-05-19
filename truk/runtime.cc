@@ -388,13 +388,20 @@ TRUK_API void Runtime::_gc_walk(GCWalkContext *context, Object *i) {
 TRUK_API Runtime::Runtime(peff::Alloc *upstream) noexcept : _global_alloc(this, upstream) {
 }
 
-TRUK_API void Runtime::gc(Object *&end_object_out, size_t &num_objects) noexcept {
+TRUK_API Runtime::~Runtime() {
+	_is_deleting = true;
+	gc();
+	assert(!_num_objects);
+	assert(!_global_alloc.sz_allocated);
+}
+
+TRUK_API void Runtime::gc() noexcept {
 	size_t iteration_times = 0;
 rescan:
 	++iteration_times;
 	GCWalkContext context;
 
-	Object *host_ref_list = nullptr;
+	Object *host_ref_list = nullptr, *end_object = nullptr;
 
 	{
 		Object *prev = nullptr;
@@ -418,7 +425,7 @@ rescan:
 			prev = i;
 		}
 
-		end_object_out = prev;
+		end_object = prev;
 	}
 
 	for (Object *i = host_ref_list, *next; i; i = next) {
@@ -481,11 +488,11 @@ rescan:
 			assert(!i->_prev_object);
 		}
 
-		if (end_object_out == i) {
+		if (end_object == i) {
 			if (i->_prev_object) {
-				end_object_out = i->_prev_object;
+				end_object = i->_prev_object;
 			} else {
-				end_object_out = nullptr;
+				end_object = nullptr;
 			}
 			assert(!i->_next_object);
 		}
@@ -505,7 +512,7 @@ rescan:
 
 	clear_unwalked_list = true;
 
-	num_objects -= num_deleted_objects;
+	_num_objects -= num_deleted_objects;
 }
 
 TRUK_API MemberObject *Runtime::resolve_member(ScopeObject *scope, SymbolObject *symbol) {
@@ -713,7 +720,7 @@ TRUK_API InternalExceptionPointer Runtime::exec(ContextObject *context) {
 TRUK_API InternalExceptionPointer Runtime::exec(ScopeObject *cur_scope, ListObject *list) {
 	HostObjectRef<ContextObject> context;
 
-	if (!(context = alloc_runtime_managed_object<ContextObject>(get_global_allocator(), get_global_allocator())))
+	if (!(context = alloc_managed_object<ContextObject>(get_global_allocator(), get_global_allocator())))
 		return OutOfMemoryError::alloc();
 
 	EvalFrame frame(get_global_allocator());
