@@ -42,7 +42,8 @@ TRUK_API CompilationError::~CompilationError() {
 
 TRUK_API LexicalError::LexicalError(
 	peff::Alloc *allocator,
-	const SourcePosition &source_position) noexcept : CompilationError(allocator, CompilationErrorCode::LexicalError), source_position(source_position) {
+	const SourcePosition &source_position,
+		LexicalErrorKind lexical_error_kind) noexcept : CompilationError(allocator, CompilationErrorCode::LexicalError), source_position(source_position), lexical_error_kind(lexical_error_kind) {
 }
 
 TRUK_API LexicalError::~LexicalError() {
@@ -54,8 +55,9 @@ TRUK_API void LexicalError::dealloc() noexcept {
 
 TRUK_API LexicalError *LexicalError::alloc(
 	peff::Alloc *allocator,
-	const SourcePosition &source_position) noexcept {
-	return peff::alloc_and_construct<LexicalError>(allocator, alignof(LexicalError), allocator, source_position);
+	const SourcePosition &source_position,
+		LexicalErrorKind lexical_error_kind) noexcept {
+	return peff::alloc_and_construct<LexicalError>(allocator, alignof(LexicalError), allocator, source_position, lexical_error_kind);
 }
 
 TRUK_API SyntaxError::SyntaxError(

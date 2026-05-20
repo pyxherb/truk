@@ -628,6 +628,8 @@ TRUK_API InternalExceptionPointer Runtime::exec(ContextObject *context) {
 						break;
 				}
 			} else if (cur_frame.eval_index >= cur_frame.list_object->elements.size()) {
+				if(!cur_frame.cached_callee)
+					std::terminate();
 				// All elements are evaluated.
 				switch (cur_frame.cached_callee->get_fn_type()) {
 					case FnType::Regular: {
@@ -711,10 +713,13 @@ TRUK_API InternalExceptionPointer Runtime::exec(ContextObject *context) {
 						break;
 				}
 			}
+			++cur_frame.eval_index;
 		} else {
 			(++context->frames.begin_reversed())->returned_value = cur_frame.list_object;
+			context->frames.pop_back();
 		}
 	}
+	return {};
 }
 
 TRUK_API InternalExceptionPointer Runtime::exec(ScopeObject *cur_scope, ListObject *list) {
@@ -723,13 +728,22 @@ TRUK_API InternalExceptionPointer Runtime::exec(ScopeObject *cur_scope, ListObje
 	if (!(context = alloc_managed_object<ContextObject>(get_global_allocator(), get_global_allocator())))
 		return OutOfMemoryError::alloc();
 
-	EvalFrame frame(get_global_allocator());
+	{
+		EvalFrame initial_frame(get_global_allocator());
 
-	frame.cur_scope = cur_scope;
-	frame.list_object = list;
+		if (!context->frames.push_back(std::move(initial_frame)))
+			return OutOfMemoryError::alloc();
+	}
 
-	if (!context->frames.push_back(std::move(frame)))
-		return OutOfMemoryError::alloc();
+	{
+		EvalFrame frame(get_global_allocator());
+
+		frame.cur_scope = cur_scope;
+		frame.list_object = list;
+
+		if (!context->frames.push_back(std::move(frame)))
+			return OutOfMemoryError::alloc();
+	}
 
 	TRUK_RETURN_IF_EXCEPT(exec(context.get()));
 

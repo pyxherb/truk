@@ -1,5 +1,5 @@
-#include "lexer.h"
-#include "except.h"
+#include <truk/lexer.h>
+#include <truk/except.h>
 #include <algorithm>
 
 using namespace truk;
@@ -14,7 +14,7 @@ enum LexCondition {
 	yycLineCommentCondition,
 };
 
-TRUK_API InternalExceptionPointer truk::lex(ModuleObject *module_node, const std::string_view &src, peff::Alloc *allocator, TokenList &token_list_out) {
+TRUK_API InternalExceptionPointer truk::lex(ModuleObject *module, const std::string_view &src, peff::Alloc *allocator, TokenList &token_list_out) {
 	const char *YYCURSOR = src.data(), *YYMARKER = YYCURSOR, *YYLIMIT = src.data() + src.size();
 	const char *prev_YYCURSOR = YYCURSOR;
 
@@ -36,148 +36,136 @@ TRUK_API InternalExceptionPointer truk::lex(ModuleObject *module_node, const std
 				re2c:define:YYCTYPE = char;
 				re2c:eof = 1;
 
-				<InitialCondition>"///"		{ YYSETCONDITION(LineCommentCondition); token->token_id = TokenId::DocumentationComment; continue; }
-				<InitialCondition>"//"		{ YYSETCONDITION(LineCommentCondition); token->token_id = TokenId::LineComment; continue; }
-				<InitialCondition>"/*"		{ YYSETCONDITION(CommentCondition); token->token_id = TokenId::BlockComment; continue; }
+				<InitialCondition>"///"		{ YYSETCONDITION(LineCommentCondition); token.token_id = TokenId::DocumentationComment; continue; }
+				<InitialCondition>"//"		{ YYSETCONDITION(LineCommentCondition); token.token_id = TokenId::LineComment; continue; }
+				<InitialCondition>"/*"		{ YYSETCONDITION(CommentCondition); token.token_id = TokenId::BlockComment; continue; }
 
-				<InitialCondition>"::"		{ token->token_id = TokenId::ScopeOp; break; }
-				<InitialCondition>"=="		{ token->token_id = TokenId::Eq; break; }
-				<InitialCondition>"!="		{ token->token_id = TokenId::Neq; break; }
-				<InitialCondition>"..."		{ token->token_id = TokenId::Ellipsis; break; }
-				<InitialCondition>":"		{ token->token_id = TokenId::Colon; break; }
-				<InitialCondition>"$"		{ token->token_id = TokenId::Dollar; break; }
-				<InitialCondition>"?"		{ token->token_id = TokenId::Question; break; }
-				<InitialCondition>"#"		{ token->token_id = TokenId::Hash; break; }
-				<InitialCondition>"%"		{ token->token_id = TokenId::Percent; break; }
-				<InitialCondition>"^"		{ token->token_id = TokenId::Xor; break; }
-				<InitialCondition>"."		{ token->token_id = TokenId::Dot; break; }
-				<InitialCondition>"&"		{ token->token_id = TokenId::And; break; }
-				<InitialCondition>"@"		{ token->token_id = TokenId::At; break; }
-				<InitialCondition>"!"		{ token->token_id = TokenId::Exclamation; break; }
-				<InitialCondition>"~"		{ token->token_id = TokenId::Tilde; break; }
-				<InitialCondition>"*"		{ token->token_id = TokenId::Asterisk; break; }
-				<InitialCondition>"="		{ token->token_id = TokenId::Assign; break; }
-				<InitialCondition>"`"		{ token->token_id = TokenId::Backquote; break; }
+				<InitialCondition>"::"		{ token.token_id = TokenId::ScopeOp; break; }
+				<InitialCondition>"=="		{ token.token_id = TokenId::Eq; break; }
+				<InitialCondition>"!="		{ token.token_id = TokenId::Neq; break; }
+				<InitialCondition>"..."		{ token.token_id = TokenId::Ellipsis; break; }
+				<InitialCondition>":"		{ token.token_id = TokenId::Colon; break; }
+				<InitialCondition>"$"		{ token.token_id = TokenId::Dollar; break; }
+				<InitialCondition>"?"		{ token.token_id = TokenId::Question; break; }
+				<InitialCondition>"#"		{ token.token_id = TokenId::Hash; break; }
+				<InitialCondition>"%"		{ token.token_id = TokenId::Percent; break; }
+				<InitialCondition>"^"		{ token.token_id = TokenId::Xor; break; }
+				<InitialCondition>"."		{ token.token_id = TokenId::Dot; break; }
+				<InitialCondition>"&"		{ token.token_id = TokenId::And; break; }
+				<InitialCondition>"@"		{ token.token_id = TokenId::At; break; }
+				<InitialCondition>"!"		{ token.token_id = TokenId::Exclamation; break; }
+				<InitialCondition>"~"		{ token.token_id = TokenId::Tilde; break; }
+				<InitialCondition>"*"		{ token.token_id = TokenId::Asterisk; break; }
+				<InitialCondition>"="		{ token.token_id = TokenId::Assign; break; }
+				<InitialCondition>"`"		{ token.token_id = TokenId::Backquote; break; }
 
-				<InitialCondition>"'"		{ token->token_id = TokenId::Quote; break; }
+				<InitialCondition>"'"		{ token.token_id = TokenId::Quote; break; }
 
-				<InitialCondition>"{"		{ token->token_id = TokenId::LBrace; break; }
-				<InitialCondition>"}"		{ token->token_id = TokenId::RBrace; break; }
-				<InitialCondition>"["		{ token->token_id = TokenId::LBracket; break; }
-				<InitialCondition>"]"		{ token->token_id = TokenId::RBracket; break; }
-				<InitialCondition>"("		{ token->token_id = TokenId::LParenthese; break; }
-				<InitialCondition>")"		{ token->token_id = TokenId::RParenthese; break; }
+				<InitialCondition>"{"		{ token.token_id = TokenId::LBrace; break; }
+				<InitialCondition>"}"		{ token.token_id = TokenId::RBrace; break; }
+				<InitialCondition>"["		{ token.token_id = TokenId::LBracket; break; }
+				<InitialCondition>"]"		{ token.token_id = TokenId::RBracket; break; }
+				<InitialCondition>"("		{ token.token_id = TokenId::LParenthese; break; }
+				<InitialCondition>")"		{ token.token_id = TokenId::RParenthese; break; }
 
 				<InitialCondition>[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]* {
-					token->token_id = TokenId::Id;
+					token.token_id = TokenId::Id;
 					break;
 				}
 
 				<InitialCondition>"0"[0-7]+[uU][lL] {
-					token->token_id = TokenId::ULongLiteral;
-					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
-						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Octal));
+					token.token_id = TokenId::ULongLiteral;
+					token.exdata = IntTokenType::Octal;
 					break;
 				}
 
 				<InitialCondition>[0-9]+[uU][lL] {
-					token->token_id = TokenId::ULongLiteral;
-					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
-						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Decimal));
+					token.token_id = TokenId::ULongLiteral;
+					token.exdata = IntTokenType::Decimal;
 					break;
 				}
 
 				<InitialCondition>"0"[xX][0-9a-fA-F]+[uU][lL] {
-					token->token_id = TokenId::ULongLiteral;
-					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
-						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Hexadecimal));
+					token.token_id = TokenId::ULongLiteral;
+					token.exdata = IntTokenType::Hexadecimal;
 					break;
 				}
 
 				<InitialCondition>"0"[bB][01]+[uU][lL] {
-					token->token_id = TokenId::ULongLiteral;
-					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
-						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Binary));
+					token.token_id = TokenId::ULongLiteral;
+					token.exdata = IntTokenType::Binary;
 					break;
 				}
 
 				<InitialCondition>"0"[0-7]+[uU] {
-					token->token_id = TokenId::UIntLiteral;
-					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
-						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Octal));
+					token.token_id = TokenId::UIntLiteral;
+					token.exdata = IntTokenType::Octal;
 					break;
 				}
 
 				<InitialCondition>[0-9]+[uU] {
-					token->token_id = TokenId::UIntLiteral;
-					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
-						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Decimal));
+					token.token_id = TokenId::UIntLiteral;
+					token.exdata = IntTokenType::Decimal;
 					break;
 				}
 
 				<InitialCondition>"0"[xX][0-9a-fA-F]+[uU] {
-					token->token_id = TokenId::UIntLiteral;
-					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
-						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Hexadecimal));
+					token.token_id = TokenId::UIntLiteral;
+					token.exdata = IntTokenType::Hexadecimal;
 					break;
 				}
 
 				<InitialCondition>"0"[bB][01]+[uU] {
-					token->token_id = TokenId::UIntLiteral;
-					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
-						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Binary));
+					token.token_id = TokenId::UIntLiteral;
+					token.exdata = IntTokenType::Binary;
 					break;
 				}
 
 				<InitialCondition>"0"[0-7]+ {
-					token->token_id = TokenId::IntLiteral;
-					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
-						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Octal));
+					token.token_id = TokenId::IntLiteral;
+					token.exdata = IntTokenType::Octal;
 					break;
 				}
 
 				<InitialCondition>[0-9]+ {
-					token->token_id = TokenId::IntLiteral;
-					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
-						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Decimal));
+					token.token_id = TokenId::IntLiteral;
+					token.exdata = IntTokenType::Decimal;
 					break;
 				}
 
 				<InitialCondition>"0"[xX][0-9a-fA-F]+ {
-					token->token_id = TokenId::IntLiteral;
-					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
-						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Hexadecimal));
+					token.token_id = TokenId::IntLiteral;
+					token.exdata = IntTokenType::Hexadecimal;
 					break;
 				}
 
 				<InitialCondition>"0"[bB][01]+ {
-					token->token_id = TokenId::IntLiteral;
-					token->ex_data = std::unique_ptr<TokenExtension, peff::DeallocableDeleter<TokenExtension>>(
-						peff::alloc_and_construct<IntTokenExtension>(allocator, alignof(IntTokenExtension), allocator, IntTokenType::Binary));
+					token.token_id = TokenId::IntLiteral;
+					token.exdata = IntTokenType::Binary;
 					break;
 				}
 
 				<InitialCondition>[0-9]+"."[0-9]+[fF] {
-					token->token_id = TokenId::F32Literal;
+					token.token_id = TokenId::FloatLiteral;
 					break;
 				}
 
 				<InitialCondition>[0-9]+"."[0-9]+ {
-					token->token_id = TokenId::F64Literal;
+					token.token_id = TokenId::DoubleLiteral;
 					break;
 				}
 
 				<InitialCondition>[a-zA-Z_\-\x80-\xff][a-zA-Z0-9_\-\x80-\xff]* {
-					token->token_id = TokenId::Id;
+					token.token_id = TokenId::Id;
 					break;
 				}
 
 				<InitialCondition>"\""		{ YYSETCONDITION(StringCondition); continue; }
 
-				<InitialCondition>"\n"		{ token->token_id = TokenId::NewLine; break; }
+				<InitialCondition>"\n"		{ token.token_id = TokenId::NewLine; break; }
 				<InitialCondition>$			{ goto end; }
 
-				<InitialCondition>[ \r\t]+	{ token->token_id = TokenId::Whitespace; break; }
+				<InitialCondition>[ \r\t]+	{ token.token_id = TokenId::Whitespace; break; }
 
 				<InitialCondition>[^]		{
 					size_t begin_index = prev_YYCURSOR - src.data(), endIndex = YYCURSOR - src.data();
@@ -195,18 +183,17 @@ TRUK_API InternalExceptionPointer truk::lex(ModuleObject *module_node, const std
 						YYCURSOR_pos = 0;
 					YYCURSOR_pos = YYCURSOR_index - YYCURSOR_pos;
 
-					return LexicalError {
-						SourceLocation {
-						module_node,
-						{ (size_t)std::count(str_to_begin.begin(), str_to_begin.end(), '\n'), prev_YYCURSOR_pos },
-						{ (size_t)std::count(str_to_end.begin(), str_to_end.end(), '\n'), YYCURSOR_pos }
-					}, LexicalErrorKind::UnrecognizedToken};
+					return with_oom_error_if_alloc_failed(
+						LexicalError::alloc(
+							allocator,
+							{ (size_t)std::count(str_to_begin.begin(), str_to_begin.end(), '\n'), prev_YYCURSOR_pos },
+							LexicalErrorKind::UnrecognizedToken));
 				}
 
 				<StringCondition>"\""		{
 					YYSETCONDITION(InitialCondition);
-					token->token_id = TokenId::StringLiteral;
-					token->exdata = std::move(str_literal);
+					token.token_id = TokenId::StringLiteral;
+					token.exdata = std::move(str_literal);
 					break;
 				}
 				<StringCondition>"\\"		{ YYSETCONDITION(EscapeCondition); continue; }
@@ -228,7 +215,8 @@ TRUK_API InternalExceptionPointer truk::lex(ModuleObject *module_node, const std
 
 					// Unexpected end of line.
 					return with_oom_error_if_alloc_failed(
-						LexicalError::alloc(allocator, SourcePosition { module_node, (size_t)std::count(strToBegin.begin(), strToBegin.end(), '\n'), pos })
+						LexicalError::alloc(allocator, SourcePosition { (size_t)std::count(str_to_begin.begin(), str_to_begin.end(), '\n'), YYCURSOR_pos },
+						LexicalErrorKind::UnterminatedString)
 					);
 				}
 				<StringCondition>$	{
@@ -248,7 +236,8 @@ TRUK_API InternalExceptionPointer truk::lex(ModuleObject *module_node, const std
 					YYCURSOR_pos = YYCURSOR_index - YYCURSOR_pos;
 
 					return with_oom_error_if_alloc_failed(
-						LexicalError::alloc(allocator, SourcePosition { module_node, (size_t)std::count(strToBegin.begin(), strToBegin.end(), '\n'), pos })
+						LexicalError::alloc(allocator, SourcePosition { (size_t)std::count(str_to_begin.begin(), str_to_begin.end(), '\n'), YYCURSOR_pos },
+						LexicalErrorKind::PrematuredEOF)
 					);
 				}
 				<StringCondition>[^]		{ if(!str_literal.push_back(+YYCURSOR[-1])) goto oom; continue; }
@@ -317,7 +306,8 @@ TRUK_API InternalExceptionPointer truk::lex(ModuleObject *module_node, const std
 					YYCURSOR_pos = YYCURSOR_index - YYCURSOR_pos;
 
 					return with_oom_error_if_alloc_failed(
-						LexicalError::alloc(allocator, SourcePosition { module_node, (size_t)std::count(strToBegin.begin(), strToBegin.end(), '\n'), pos })
+						LexicalError::alloc(allocator, SourcePosition { (size_t)std::count(str_to_begin.begin(), str_to_begin.end(), '\n'), YYCURSOR_pos },
+							LexicalErrorKind::PrematuredEOF)
 					);
 				}
 				<EscapeCondition>[^]{
@@ -337,7 +327,8 @@ TRUK_API InternalExceptionPointer truk::lex(ModuleObject *module_node, const std
 					YYCURSOR_pos = YYCURSOR_index - YYCURSOR_pos;
 
 					return with_oom_error_if_alloc_failed(
-						LexicalError::alloc(allocator, SourcePosition { module_node, (size_t)std::count(strToBegin.begin(), strToBegin.end(), '\n'), pos })
+						LexicalError::alloc(allocator, SourcePosition { (size_t)std::count(str_to_begin.begin(), str_to_begin.end(), '\n'), YYCURSOR_pos },
+							LexicalErrorKind::InvalidEscape)
 					);
 				}
 
@@ -360,7 +351,8 @@ TRUK_API InternalExceptionPointer truk::lex(ModuleObject *module_node, const std
 					YYCURSOR_pos = YYCURSOR_index - YYCURSOR_pos;
 
 					return with_oom_error_if_alloc_failed(
-						LexicalError::alloc(allocator, SourcePosition { module_node, (size_t)std::count(strToBegin.begin(), strToBegin.end(), '\n'), pos })
+						LexicalError::alloc(allocator, SourcePosition { (size_t)std::count(str_to_begin.begin(), str_to_begin.end(), '\n'), YYCURSOR_pos },
+						LexicalErrorKind::PrematuredEOF)
 					);
 				}
 

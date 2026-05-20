@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 			return ENOMEM;
 		}
 
-		if (!input_script_full_path.append(input_script_full_path)) {
+		if (!input_script_full_path.append(script_filename)) {
 			_print_error("Out of memory");
 			return ENOMEM;
 		}
@@ -109,15 +109,17 @@ int main(int argc, char *argv[]) {
 	fseek(fp, SEEK_SET, 0);
 
 	{
-		char *script_content = (char *)peff::default_allocator()->alloc((size_t)size, alignof(char));
+		char *script_content = (char *)peff::default_allocator()->alloc((size_t)size + 1, alignof(char));
 
 		if (!script_content) {
 			_print_error("Out of memory");
 			return ENOMEM;
 		}
 
+		script_content[size] = '\0';
+
 		peff::Deferred release_script_content([script_content, size]() noexcept {
-			peff::default_allocator()->release(script_content, (size_t)size, alignof(char));
+			peff::default_allocator()->release(script_content, (size_t)size + 1, alignof(char));
 		});
 
 		truk::Runtime runtime(peff::default_allocator());

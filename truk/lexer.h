@@ -122,16 +122,12 @@ namespace truk {
 		Binary
 	};
 
-	struct StringTokenExData {
-		peff::String str;
-	};
-
 	struct Token {
 		size_t token_index;
 		TokenId token_id;
 		std::string_view source_text;
 		SourcePosition begin_pos, end_pos;
-		std::variant<std::monostate, StringTokenExData, IntTokenType> exdata;
+		std::variant<std::monostate, peff::String, IntTokenType> exdata;
 	};
 
 	using TokenList = peff::DynArray<Token>;

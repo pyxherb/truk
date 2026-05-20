@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.23)
 project(Truk)
 
+include_directories(${PROJECT_SOURCE_DIR})
+
 #
 # Check for AddressSanitizer if user has chosen to enable it for debugging.
 #

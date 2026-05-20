@@ -2,9 +2,13 @@
 
 using namespace truk;
 
-#define TRUK_CO_RETURN_IF_CO_PARSE_ERROR(expr)                                    \
+#define TRUK_CO_RETURN_IF_ERROR(expr)        \
+	if (InternalExceptionPointer _ = (expr); _) \
+		co_return std::move(_);                 \
+	else
+#define TRUK_CO_RETURN_IF_CO_PARSE_ERROR(expr)                                             \
 	if (InternalExceptionPointer _ = co_await ((expr)(&this->coro_scheduler)); _) \
-		co_return _;                                                              \
+		co_return std::move(_);                                                   \
 	else
 
 TRUK_API InternalExceptionPointer ParseCoroutine::resume(ParseCoroutineScheduler *scheduler) {
@@ -320,7 +324,7 @@ PEFF_FORCEINLINE InternalExceptionPointer _parse_int(Parser *parser, Token *toke
 	return {};
 }
 
-ParseCoroutine Parser::parse_list_element(HostRefHolder &host_ref_holder, Value &value_out) {
+ParseCoroutine Parser::parse_list_element(peff::Alloc *allocator, HostRefHolder &host_ref_holder, Value &value_out) {
 	InternalExceptionPointer syntax_error;
 	Token *prefix_token = peek_token();
 
@@ -396,7 +400,7 @@ ParseCoroutine Parser::parse_list_element(HostRefHolder &host_ref_holder, Value 
 		case TokenId::StringLiteral: {
 			next_token();
 
-			const peff::String &data = std::move(std::get<StringTokenExData>(prefix_token->exdata).str);
+			const peff::String &data = std::move(std::get<peff::String>(prefix_token->exdata));
 
 			HostObjectRef<StringObject> obj;
 
@@ -426,6 +430,7 @@ ParseCoroutine Parser::parse_list_element(HostRefHolder &host_ref_holder, Value 
 			break;
 		}
 		case TokenId::Id: {
+			next_token();
 			HostObjectRef<SymbolObject> obj;
 
 			if (!(obj = alloc_managed_object<SymbolObject>(runtime->get_global_allocator(), runtime->get_global_allocator())))
@@ -443,6 +448,9 @@ ParseCoroutine Parser::parse_list_element(HostRefHolder &host_ref_holder, Value 
 			while (true) {
 				if ((cur_token = peek_token())->token_id != TokenId::ScopeOp)
 					break;
+				next_token();
+
+				TRUK_CO_RETURN_IF_ERROR(expect_token((cur_token = next_token()), TokenId::Id));
 
 				peff::String entry(runtime->get_global_allocator());
 
@@ -463,7 +471,7 @@ ParseCoroutine Parser::parse_list_element(HostRefHolder &host_ref_holder, Value 
 		case TokenId::LParenthese: {
 			HostObjectRef<ListObject> obj;
 
-			TRUK_CO_RETURN_IF_CO_PARSE_ERROR(parse_list_body(host_ref_holder, obj));
+			TRUK_CO_RETURN_IF_CO_PARSE_ERROR(parse_list_body(allocator, host_ref_holder, obj));
 
 			if (!host_ref_holder.add_object(obj.get()))
 				co_return OutOfMemoryError::alloc();
@@ -483,7 +491,7 @@ ParseCoroutine Parser::parse_list_element(HostRefHolder &host_ref_holder, Value 
 	co_return {};
 }
 
-ParseCoroutine Parser::parse_list_body(HostRefHolder &host_ref_holder, HostObjectRef<ListObject> &list_out) {
+ParseCoroutine Parser::parse_list_body(peff::Alloc *allocator, HostRefHolder &host_ref_holder, HostObjectRef<ListObject> &list_out) {
 	if (auto e = expect_token(next_token(), TokenId::LParenthese))
 		co_return e;
 
@@ -498,7 +506,7 @@ ParseCoroutine Parser::parse_list_body(HostRefHolder &host_ref_holder, HostObjec
 
 		Value element;
 
-		TRUK_CO_RETURN_IF_CO_PARSE_ERROR(parse_list_element(host_ref_holder, element));
+		TRUK_CO_RETURN_IF_CO_PARSE_ERROR(parse_list_element(allocator, host_ref_holder, element));
 
 		if (!list_out->elements.push_back(std::move(element)))
 			co_return OutOfMemoryError::alloc();
@@ -510,7 +518,7 @@ ParseCoroutine Parser::parse_list_body(HostRefHolder &host_ref_holder, HostObjec
 	co_return {};
 }
 
-ParseCoroutine Parser::parse_program(HostRefHolder &host_ref_holder, HostObjectRef<ListObject> &list_out) {
+ParseCoroutine Parser::parse_program(peff::Alloc *allocator, HostRefHolder &host_ref_holder, HostObjectRef<ListObject> &list_out) {
 	if (!(list_out = alloc_managed_object<ListObject>(runtime->get_global_allocator(), runtime->get_global_allocator())))
 		co_return OutOfMemoryError::alloc();
 
@@ -522,7 +530,7 @@ ParseCoroutine Parser::parse_program(HostRefHolder &host_ref_holder, HostObjectR
 
 		Value element;
 
-		TRUK_CO_RETURN_IF_CO_PARSE_ERROR(parse_list_element(host_ref_holder, element));
+		TRUK_CO_RETURN_IF_CO_PARSE_ERROR(parse_list_element(allocator, host_ref_holder, element));
 
 		if (!list_out->elements.push_back(std::move(element)))
 			co_return OutOfMemoryError::alloc();
@@ -531,7 +539,7 @@ ParseCoroutine Parser::parse_program(HostRefHolder &host_ref_holder, HostObjectR
 	co_return {};
 }
 
-InternalExceptionPointer Parser::parse(peff::Alloc *misc_allocator, HostObjectRef<ListObject> &list_out) {
-	HostRefHolder holder(misc_allocator);
-	return parse_program(holder, list_out).resume(&this->coro_scheduler);
+InternalExceptionPointer Parser::parse(peff::Alloc *allocator, HostObjectRef<ListObject> &list_out) {
+	HostRefHolder holder(allocator);
+	return parse_program(allocator, holder, list_out).resume(&this->coro_scheduler);
 }

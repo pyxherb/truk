@@ -40,19 +40,29 @@ namespace truk {
 		TRUK_API virtual ~CompilationError();
 	};
 
+	enum class LexicalErrorKind : uint8_t {
+		UnrecognizedToken = 0,
+		PrematuredEOF,
+		UnterminatedString,
+		InvalidEscape
+	};
+
 	class LexicalError : public CompilationError {
 	public:
 		SourcePosition source_position;
+		LexicalErrorKind lexical_error_kind;
 
 		TRUK_API LexicalError(
 			peff::Alloc *allocator,
-			const SourcePosition &source_position) noexcept;
+			const SourcePosition &source_position,
+			LexicalErrorKind lexical_error_kind) noexcept;
 		TRUK_API virtual ~LexicalError();
 		TRUK_API virtual void dealloc() noexcept override;
 
 		TRUK_API static LexicalError *alloc(
 			peff::Alloc *allocator,
-			const SourcePosition &source_position) noexcept;
+			const SourcePosition &source_position,
+			LexicalErrorKind lexical_error_kind) noexcept;
 	};
 
 	enum class SyntaxErrorKind {

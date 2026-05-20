@@ -144,9 +144,9 @@ namespace truk {
 		TokenList &token_list;
 		ParseCoroutineScheduler coro_scheduler;
 
-		ParseCoroutine parse_list_element(HostRefHolder &host_ref_holder, Value &value_out);
-		ParseCoroutine parse_list_body(HostRefHolder &host_ref_holder, HostObjectRef<ListObject> &list_out);
-		ParseCoroutine parse_program(HostRefHolder &host_ref_holder, HostObjectRef<ListObject> &list_out);
+		ParseCoroutine parse_list_element(peff::Alloc *allocator, HostRefHolder &host_ref_holder, Value &value_out);
+		ParseCoroutine parse_list_body(peff::Alloc *allocator, HostRefHolder &host_ref_holder, HostObjectRef<ListObject> &list_out);
+		ParseCoroutine parse_program(peff::Alloc *allocator, HostRefHolder &host_ref_holder, HostObjectRef<ListObject> &list_out);
 
 	public:
 		peff::DynArray<InternalExceptionPointer> errors;
@@ -189,8 +189,17 @@ namespace truk {
 			return {};
 		}
 
-		InternalExceptionPointer parse(peff::Alloc *misc_allocator, HostObjectRef<ListObject> &list_out);
+		InternalExceptionPointer parse(peff::Alloc *allocator, HostObjectRef<ListObject> &list_out);
 	};
 }
+
+namespace std {
+	template <typename... Args>
+	struct coroutine_traits<truk::ParseCoroutine, peff::Alloc *, Args...> {
+		using promise_type = truk::ParseCoroutine::promise_type;
+	};
+}
+
+static_assert(std::is_same_v<std::coroutine_traits<truk::ParseCoroutine, peff::Alloc *>::promise_type, truk::ParseCoroutine::promise_type>);
 
 #endif
